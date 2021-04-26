@@ -2,8 +2,9 @@ import { random, range, findIndex } from 'lodash';
 
 import Constants from '../Constants';
 
-export const generateSteps = (): Array<number> =>
-  range(1, Constants.LEVELS - 1).reduce(
+export const generateSteps = (): Array<number> => [
+  0,
+  ...range(1, Constants.LEVELS - 1).reduce(
     (acc, cur) => {
       const multiplier = cur + 1;
       const next = acc[cur - 1] + Constants.STEP_DELTA * multiplier;
@@ -11,13 +12,14 @@ export const generateSteps = (): Array<number> =>
       return [...acc, random(next, next + multiplier * Constants.RANDOM_STEP)];
     },
     [random(5, 5 + Constants.RANDOM_STEP)]
-  );
+  ),
+];
 
 export const getFractionsNumber = (steps: Array<number>, count: number): number => {
   const lastStep = steps.length - 1;
   const index = count > steps[lastStep - 1] ? lastStep : findIndex(steps, (step) => count <= step);
 
-  return index + 2;
+  return index + 1;
 };
 
 export const getActiveZoneCoordinates = (

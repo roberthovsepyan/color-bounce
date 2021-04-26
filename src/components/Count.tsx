@@ -5,8 +5,8 @@ import Constants from '../Constants';
 import { backgroundColors } from '../utils/colors';
 
 interface Props {
-  count: number;
   activeColorIdx: number;
+  count?: number;
 }
 
 const WIDTH = 225;

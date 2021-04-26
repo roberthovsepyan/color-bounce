@@ -8,11 +8,15 @@ import Constants from '../Constants';
 import { backgroundColors } from '../utils/colors';
 import createWorld from '../utils/createWorld';
 import { generateSteps, getFractionsNumber, getActiveZoneCoordinates } from '../utils/steps';
-import GameContext, { Direction } from '../contexts/game';
+import GameContext, { Direction, GameStatus } from '../contexts/game';
 import Count from '../components/Count';
+import Start from '../components/Start';
+import Restart from '../components/Restart';
 
 const engine = Matter.Engine.create({ enableSleeping: false });
 const world = createWorld(engine);
+
+let intervalId: ReturnType<typeof setInterval>;
 
 const Game = () => {
   const gameEngine = useRef<any>(null);
@@ -21,7 +25,7 @@ const Game = () => {
   const [count, setCount] = useState(0);
   const [steps, setSteps] = useState(generateSteps());
   const [activeZone, setActiveZone] = useState(1);
-  const [isRunning, setRunning] = useState(true);
+  const [gameStatus, setGameStatus] = useState(GameStatus.NotStarted);
   const currentFractions = getFractionsNumber(steps, count);
   const [activeZoneStart, activeZoneEnd] = getActiveZoneCoordinates(currentFractions, activeZone);
 
@@ -32,6 +36,21 @@ const Game = () => {
     setActiveZone(random(1, currentFractions));
   };
 
+  const reset = () => {
+    setDirection(Direction.LTR);
+    setActiveColorIdx(random(0, Constants.COLORS_NUMBER - 1));
+    setCount(0);
+    setActiveZone(1);
+    setGameStatus(GameStatus.NotStarted);
+    gameEngine.current.swap(createWorld(engine));
+    gameEngine.current.start();
+  };
+
+  const start = () => {
+    engine.world.gravity.y = 1.25;
+    setGameStatus(GameStatus.Started);
+  };
+
   const physics: GameEngineSystem = (entities, { touches, time }) => {
     const engine = entities.physics.engine;
     const ball = entities.ball.body;
@@ -39,14 +58,17 @@ const Game = () => {
     touches
       .filter((t) => t.type === 'press')
       .forEach(() => {
+        if (gameStatus === GameStatus.NotStarted) start();
         Matter.Body.applyForce(ball, ball.position, { x: 0.0, y: -0.04 });
         Matter.Body.setVelocity(ball, { x: 0.0, y: 0.0 });
       });
 
-    if (direction === Direction.LTR) {
-      Matter.Body.translate(ball, { x: 3.0, y: 0.0 });
-    } else if (direction === Direction.RTL) {
-      Matter.Body.translate(ball, { x: -3.0, y: 0.0 });
+    if (gameStatus === GameStatus.Started) {
+      if (direction === Direction.LTR) {
+        Matter.Body.translate(ball, { x: 3.0, y: 0.0 });
+      } else if (direction === Direction.RTL) {
+        Matter.Body.translate(ball, { x: -3.0, y: 0.0 });
+      }
     }
 
     Matter.Engine.update(engine, time.delta);
@@ -62,7 +84,8 @@ const Game = () => {
         generateNextStep(Direction.LTR);
       }
     } else if (['hit-right-wall', 'hit-left-wall', 'hit-floor'].includes(type)) {
-      setRunning(false);
+      gameEngine.current.stop();
+      setGameStatus(GameStatus.Finished);
     }
   };
 
@@ -86,6 +109,21 @@ const Game = () => {
     }
   }, [gameEngine]);
 
+  useEffect(() => {
+    if (gameStatus === GameStatus.NotStarted) {
+      intervalId = setInterval(
+        () => setActiveColorIdx(random(0, Constants.COLORS_NUMBER - 1)),
+        3000
+      );
+    } else {
+      clearInterval(intervalId);
+    }
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [gameStatus]);
+
   return (
     <Animated.View
       style={{
@@ -93,17 +131,18 @@ const Game = () => {
         backgroundColor: backgroundColors[activeColorIdx],
       }}
     >
-      <GameContext.Provider value={{ activeColorIdx, direction, currentFractions, activeZone }}>
+      <GameContext.Provider
+        value={{ activeColorIdx, direction, currentFractions, activeZone, gameStatus }}
+      >
         <View style={{ zIndex: 1, flex: 1 }}>
-          <GameEngine
-            ref={gameEngine}
-            entities={world}
-            systems={[physics]}
-            onEvent={handleEvent}
-            running={true}
-          />
+          <GameEngine ref={gameEngine} entities={world} systems={[physics]} onEvent={handleEvent} />
         </View>
-        <Count count={count} activeColorIdx={activeColorIdx} />
+        <Count
+          count={gameStatus === GameStatus.NotStarted ? undefined : count}
+          activeColorIdx={activeColorIdx}
+        />
+        {gameStatus === GameStatus.NotStarted && <Start />}
+        {gameStatus === GameStatus.Finished && <Restart score={count} onClick={reset} />}
       </GameContext.Provider>
     </Animated.View>
   );

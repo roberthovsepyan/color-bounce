@@ -42,7 +42,7 @@ const createWorld = (engine: Matter.Engine) => {
     { isStatic: true }
   );
 
-  world.gravity.y = 1.25;
+  world.gravity.y = 0;
 
   Matter.World.add(world, [ball, floor, ceiling, leftWall, rightWall]);
 
