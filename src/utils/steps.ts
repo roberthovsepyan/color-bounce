@@ -5,9 +5,10 @@ import Constants from '../Constants';
 export const generateSteps = (): Array<number> =>
   range(1, Constants.LEVELS - 1).reduce(
     (acc, cur) => {
-      const next = acc[cur - 1] + Constants.STEP_DELTA * cur;
+      const multiplier = cur + 1;
+      const next = acc[cur - 1] + Constants.STEP_DELTA * multiplier;
 
-      return [...acc, random(next, next + cur * Constants.RANDOM_STEP)];
+      return [...acc, random(next, next + multiplier * Constants.RANDOM_STEP)];
     },
     [random(5, 5 + Constants.RANDOM_STEP)]
   );

@@ -1,7 +1,6 @@
 import React, { useContext } from 'react';
 import { Animated } from 'react-native';
 
-import Constants from '../Constants';
 import { mainColors } from '../utils/colors';
 import GameContext from '../contexts/game';
 

@@ -19,7 +19,7 @@ const Floor = ({ size, body }: Props) => {
         left: x,
         width,
         height,
-        backgroundColor: 'hsl(200, 10%, 85%)',
+        backgroundColor: 'hsl(200, 35%, 85%)',
         zIndex: 1,
       }}
     />

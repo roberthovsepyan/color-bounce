@@ -65,13 +65,13 @@ const createWorld = (engine: Matter.Engine) => {
     },
     leftWall: {
       body: leftWall,
-      size: [Constants.WALL_THICKNESS, Constants.MAX_HEIGHT],
+      size: [Constants.WALL_THICKNESS, Constants.MAX_HEIGHT - Constants.FLOOR_HEIGHT * 2],
       position: Position.Left,
       renderer: Wall,
     },
     rightWall: {
       body: rightWall,
-      size: [Constants.WALL_THICKNESS, Constants.MAX_HEIGHT],
+      size: [Constants.WALL_THICKNESS, Constants.MAX_HEIGHT - Constants.FLOOR_HEIGHT * 2],
       position: Position.Right,
       renderer: Wall,
     },

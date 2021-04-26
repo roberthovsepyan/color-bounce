@@ -1,9 +1,8 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Animated, View } from 'react-native';
-import { range } from 'lodash';
+import { range, shuffle } from 'lodash';
 
-import Constants from '../Constants';
-import { backgroundColors, mainColors } from '../utils/colors';
+import { mainColors } from '../utils/colors';
 import GameContext, { Direction } from '../contexts/game';
 
 export enum Position {
@@ -19,12 +18,17 @@ interface Props {
 
 const Wall = ({ size, body, position }: Props) => {
   const { direction, activeColorIdx, activeZone, currentFractions } = useContext(GameContext);
+  const [colors, setColors] = useState(shuffle(mainColors.filter((c, i) => i !== activeColorIdx)));
   const [width, height] = size;
   const x = body.position.x - width / 2;
   const y = body.position.y - height / 2;
   const isActive =
     (position === Position.Left && direction === Direction.RTL) ||
     (position === Position.Right && direction === Direction.LTR);
+
+  useEffect(() => {
+    setColors(shuffle(mainColors.filter((c, i) => i !== activeColorIdx)));
+  }, [direction, activeColorIdx]);
 
   return (
     <Animated.View
@@ -42,7 +46,7 @@ const Wall = ({ size, body, position }: Props) => {
           key={idx}
           style={{
             flex: 1,
-            backgroundColor: activeZone === idx + 1 ? mainColors[activeColorIdx] : 'red',
+            backgroundColor: activeZone === idx + 1 ? mainColors[activeColorIdx] : colors[idx],
           }}
         />
       ))}
