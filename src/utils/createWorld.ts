@@ -44,6 +44,9 @@ const createWorld = (engine: Matter.Engine) => {
 
   world.gravity.y = 0;
 
+  Matter.World.clear(world, false);
+  // @ts-ignore
+  Matter.Events.off(engine);
   Matter.World.add(world, [ball, floor, ceiling, leftWall, rightWall]);
 
   return {

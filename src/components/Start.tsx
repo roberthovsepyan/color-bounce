@@ -4,7 +4,11 @@ import { Animated, View, Text, StyleSheet } from 'react-native';
 import Constants from '../Constants';
 import HighScore from './HighScore';
 
-const Start = () => {
+interface Props {
+  highScore: number;
+}
+
+const Start = ({ highScore }: Props) => {
   return (
     <View style={styles.container}>
       <Animated.View style={styles.title}>
@@ -14,7 +18,7 @@ const Start = () => {
         <Text style={styles.instructionText}>TAP</Text>
         <Text style={styles.instructionText}>TO JUMP</Text>
       </Animated.View>
-      <HighScore score={0} />
+      <HighScore score={highScore} />
     </View>
   );
 };

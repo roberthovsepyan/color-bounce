@@ -6,10 +6,11 @@ import HighScore from './HighScore';
 
 interface Props {
   score: number;
+  highScore: number;
   onClick: () => void;
 }
 
-const Restart = ({ score, onClick }: Props) => {
+const Restart = ({ score, highScore, onClick }: Props) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -25,7 +26,7 @@ const Restart = ({ score, onClick }: Props) => {
           </TouchableHighlight>
         </View>
       </View>
-      <HighScore score={0} />
+      <HighScore score={highScore} />
     </View>
   );
 };

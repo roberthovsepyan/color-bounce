@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Animated, View } from 'react-native';
 import { GameEngine, GameEngineSystem } from 'react-native-game-engine';
 import Matter from 'matter-js';
@@ -8,6 +8,7 @@ import Constants from '../Constants';
 import { backgroundColors } from '../utils/colors';
 import createWorld from '../utils/createWorld';
 import { generateSteps, getFractionsNumber, getActiveZoneCoordinates } from '../utils/steps';
+import { storeData, getData } from '../utils/asyncStorage';
 import GameContext, { Direction, GameStatus } from '../contexts/game';
 import Count from '../components/Count';
 import Start from '../components/Start';
@@ -26,8 +27,29 @@ const Game = () => {
   const [steps, setSteps] = useState(generateSteps());
   const [activeZone, setActiveZone] = useState(1);
   const [gameStatus, setGameStatus] = useState(GameStatus.NotStarted);
+  const [highScore, setHighScore] = useState(0);
   const currentFractions = getFractionsNumber(steps, count);
   const [activeZoneStart, activeZoneEnd] = getActiveZoneCoordinates(currentFractions, activeZone);
+
+  const addEvents = useCallback(() => {
+    const leftWallX = Constants.WALL_THICKNESS / 2;
+    const rightWallX = Constants.MAX_WIDTH - Constants.WALL_THICKNESS / 2;
+
+    if (gameEngine && gameEngine.current) {
+      Matter.Events.on(engine, 'collisionStart', (e) => {
+        const { position } = e.pairs[0].bodyB;
+        const ballY = e.pairs[0].bodyA.position.y;
+
+        if (position.x === rightWallX) {
+          gameEngine.current.dispatch({ type: 'hit-right-wall', ballY });
+        } else if (position.x === leftWallX) {
+          gameEngine.current.dispatch({ type: 'hit-left-wall', ballY });
+        } else {
+          gameEngine.current.dispatch({ type: 'hit-floor' });
+        }
+      });
+    }
+  }, [gameEngine]);
 
   const generateNextStep = (direction: Direction) => {
     setDirection(direction);
@@ -43,12 +65,22 @@ const Game = () => {
     setActiveZone(1);
     setGameStatus(GameStatus.NotStarted);
     gameEngine.current.swap(createWorld(engine));
+    addEvents();
     gameEngine.current.start();
   };
 
   const start = () => {
     engine.world.gravity.y = 1.25;
     setGameStatus(GameStatus.Started);
+  };
+
+  const finish = () => {
+    if (count > highScore) {
+      storeData('highScore', count.toString());
+      setHighScore(count);
+    }
+    gameEngine.current.stop();
+    setGameStatus(GameStatus.Finished);
   };
 
   const physics: GameEngineSystem = (entities, { touches, time }) => {
@@ -84,30 +116,19 @@ const Game = () => {
         generateNextStep(Direction.LTR);
       }
     } else if (['hit-right-wall', 'hit-left-wall', 'hit-floor'].includes(type)) {
-      gameEngine.current.stop();
-      setGameStatus(GameStatus.Finished);
+      finish();
     }
   };
 
   useEffect(() => {
-    const leftWallX = Constants.WALL_THICKNESS / 2;
-    const rightWallX = Constants.MAX_WIDTH - Constants.WALL_THICKNESS / 2;
+    addEvents();
+  }, [addEvents]);
 
-    if (gameEngine && gameEngine.current) {
-      Matter.Events.on(engine, 'collisionStart', (e) => {
-        const { position } = e.pairs[0].bodyB;
-        const ballY = e.pairs[0].bodyA.position.y;
-
-        if (position.x === rightWallX) {
-          gameEngine.current.dispatch({ type: 'hit-right-wall', ballY });
-        } else if (position.x === leftWallX) {
-          gameEngine.current.dispatch({ type: 'hit-left-wall', ballY });
-        } else {
-          gameEngine.current.dispatch({ type: 'hit-floor' });
-        }
-      });
-    }
-  }, [gameEngine]);
+  useEffect(() => {
+    getData('highScore').then((score) => {
+      if (score) setHighScore(parseInt(score, 10));
+    });
+  }, []);
 
   useEffect(() => {
     if (gameStatus === GameStatus.NotStarted) {
@@ -141,8 +162,10 @@ const Game = () => {
           count={gameStatus === GameStatus.NotStarted ? undefined : count}
           activeColorIdx={activeColorIdx}
         />
-        {gameStatus === GameStatus.NotStarted && <Start />}
-        {gameStatus === GameStatus.Finished && <Restart score={count} onClick={reset} />}
+        {gameStatus === GameStatus.NotStarted && <Start highScore={highScore} />}
+        {gameStatus === GameStatus.Finished && (
+          <Restart score={count} highScore={highScore} onClick={reset} />
+        )}
       </GameContext.Provider>
     </Animated.View>
   );
