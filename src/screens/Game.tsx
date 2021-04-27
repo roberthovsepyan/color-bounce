@@ -162,10 +162,8 @@ const Game = () => {
           count={gameStatus === GameStatus.NotStarted ? undefined : count}
           activeColorIdx={activeColorIdx}
         />
-        {gameStatus === GameStatus.NotStarted && <Start highScore={highScore} />}
-        {gameStatus === GameStatus.Finished && (
-          <Restart score={count} highScore={highScore} onClick={reset} />
-        )}
+        <Start gameStatus={gameStatus} highScore={highScore} />
+        <Restart gameStatus={gameStatus} score={count} highScore={highScore} onClick={reset} />
       </GameContext.Provider>
     </Animated.View>
   );
