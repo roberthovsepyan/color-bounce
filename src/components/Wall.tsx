@@ -1,6 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Animated, View } from 'react-native';
+import React, { useContext, useEffect, useState, useRef } from 'react';
+import { View } from 'react-native';
 import { range, shuffle } from 'lodash';
+import * as Animatable from 'react-native-animatable';
 
 import { mainColors } from '../utils/colors';
 import GameContext, { Direction, GameStatus } from '../contexts/game';
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const Wall = ({ size, body, position }: Props) => {
+  const wall = useRef<any>(null);
   const { direction, activeColorIdx, activeZone, currentFractions, gameStatus } = useContext(
     GameContext
   );
@@ -28,20 +30,32 @@ const Wall = ({ size, body, position }: Props) => {
     gameStatus !== GameStatus.NotStarted &&
     ((position === Position.Left && direction === Direction.RTL) ||
       (position === Position.Right && direction === Direction.LTR));
+  const hiddenX = position === Position.Left ? x - width : x + width;
 
   useEffect(() => {
     setColors(shuffle(mainColors.filter((c, i) => i !== activeColorIdx)));
   }, [direction, activeColorIdx]);
 
+  useEffect(() => {
+    if (isActive) {
+      if (position === Position.Left) {
+        wall?.current?.slideInLeft(350);
+      } else {
+        wall?.current?.slideInRight(350);
+      }
+    }
+  }, [isActive, wall, position]);
+
   return (
-    <Animated.View
+    <Animatable.View
+      ref={wall}
       style={{
         position: 'absolute',
         top: y,
-        left: x,
+        left: isActive ? x : hiddenX,
         width,
         height,
-        opacity: isActive ? 1 : 0,
+        opacity: 1,
       }}
     >
       {range(currentFractions).map((idx) => (
@@ -53,7 +67,7 @@ const Wall = ({ size, body, position }: Props) => {
           }}
         />
       ))}
-    </Animated.View>
+    </Animatable.View>
   );
 };
 
