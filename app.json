@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "color-bounce",
+    "name": "Color Bounce",
     "slug": "color-bounce",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -27,6 +27,8 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "description": "Color Bounce is a fun mobile game where you bounce a ball off walls with matching colors.\nIt is built with React Native, React Native Game Engine and MatterJS.",
+    "githubUrl": "https://github.com/roberthovsepyan/color-bounce"
   }
 }
